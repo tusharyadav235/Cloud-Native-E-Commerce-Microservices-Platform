@@ -1,0 +1,15 @@
+resources:
+  - ../../base
+
+configMapGenerator:
+  - name: db-config
+    literals:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-prod.db:5432/ecommerce
+
+secretGenerator:
+  - name: db-credentials
+    literals:
+      - SPRING_DATASOURCE_USERNAME=produser
+      - SPRING_DATASOURCE_PASSWORD=prodpassword
+
+namePrefix: prod-
