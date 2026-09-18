@@ -38,3 +38,12 @@ coverage/
 ### OS Files ###
 .DS_Store
 Thumbs.db
+
+### Markdown Files ###
+# Ignore markdown files except README
+*.md
+!README.md
+
+### Kubernetes Secrets ###
+# Do not commit Kubernetes secrets to Git!
+*db-secret.yaml

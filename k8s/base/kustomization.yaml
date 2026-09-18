@@ -12,3 +12,6 @@ resources:
   - cart-hpa.yaml
   - order-hpa.yaml
   - frontend-hpa.yaml
+  - db-configmap.yaml
+  - secret-store.yaml
+  - external-secret.yaml
