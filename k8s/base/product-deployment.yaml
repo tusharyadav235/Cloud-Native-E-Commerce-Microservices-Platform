@@ -41,8 +41,13 @@ spec:
               containerPort: 8081
               protocol: TCP
           env:
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: db-config
+                  key: DB_HOST
             - name: SPRING_DATASOURCE_URL
-              value: jdbc:mysql://mysql.default.svc.cluster.local:3306/product_db?createDatabaseIfNotExist=true&serverTimezone=UTC
+              value: jdbc:mysql://$(DB_HOST):3306/product_db?createDatabaseIfNotExist=true&serverTimezone=UTC
           envFrom:
             - configMapRef:
                 name: db-config
