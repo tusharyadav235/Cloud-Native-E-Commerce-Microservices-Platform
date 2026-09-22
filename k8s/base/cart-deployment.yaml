@@ -40,6 +40,9 @@ spec:
             - name: http
               containerPort: 8082
               protocol: TCP
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:mysql://mysql.default.svc.cluster.local:3306/cart_db?createDatabaseIfNotExist=true&serverTimezone=UTC
           envFrom:
             - configMapRef:
                 name: db-config

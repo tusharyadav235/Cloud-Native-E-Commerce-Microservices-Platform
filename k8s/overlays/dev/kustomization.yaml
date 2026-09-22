@@ -1,10 +1,7 @@
 resources:
   - ../../base
 
-configMapGenerator:
-  - name: db-config
-    literals:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-dev.db:5432/ecommerce
+
 
 
 

@@ -1,4 +1,6 @@
 resources:
+  - mysql-deployment.yaml
+  - mysql-service.yaml
   - product-deployment.yaml
   - product-service.yaml
   - cart-deployment.yaml
