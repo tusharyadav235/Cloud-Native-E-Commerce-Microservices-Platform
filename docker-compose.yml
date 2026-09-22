@@ -1,0 +1,75 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - ecommerce-net
+
+  api-gateway:
+    image: nginx:alpine
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - ecommerce-net
+
+  product-service:
+    build:
+      context: ./product-service
+    container_name: product-service
+    depends_on:
+      - mysql
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/product_db?createDatabaseIfNotExist=true&serverTimezone=UTC
+    networks:
+      - ecommerce-net
+
+  order-service:
+    build:
+      context: ./order-service
+    container_name: order-service
+    depends_on:
+      - mysql
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/order_db?createDatabaseIfNotExist=true&serverTimezone=UTC
+    networks:
+      - ecommerce-net
+
+  cart-service:
+    build:
+      context: ./cart-service
+    container_name: cart-service
+    depends_on:
+      - mysql
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/cart_db?createDatabaseIfNotExist=true&serverTimezone=UTC
+    networks:
+      - ecommerce-net
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: frontend
+    ports:
+      - "3000:8080"
+    depends_on:
+      - api-gateway
+    networks:
+      - ecommerce-net
+
+volumes:
+  mysql-data:
+
+networks:
+  ecommerce-net:
+    driver: bridge
