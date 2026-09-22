@@ -11,13 +11,13 @@ COPY src ./src
 RUN mvn clean package -DskipTests -B
 
 # Runtime stage
-FROM eclipse-temurin:17-jre-alpine
+FROM eclipse-temurin:17-jre-jammy
 LABEL maintainer="development-team"
 
 WORKDIR /app
 
 # Create a non-root user and group
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+RUN groupadd -r appgroup && useradd -r -g appgroup appuser
 
 # Copy the built jar from the builder stage
 COPY --from=builder --chown=appuser:appgroup /build/target/*.jar app.jar

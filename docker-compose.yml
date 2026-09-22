@@ -12,6 +12,11 @@ services:
       - mysql-data:/var/lib/mysql
     networks:
       - ecommerce-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   api-gateway:
     image: nginx:alpine
@@ -28,7 +33,8 @@ services:
       context: ./product-service
     container_name: product-service
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/product_db?createDatabaseIfNotExist=true&serverTimezone=UTC
     networks:
@@ -39,7 +45,8 @@ services:
       context: ./order-service
     container_name: order-service
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/order_db?createDatabaseIfNotExist=true&serverTimezone=UTC
     networks:
@@ -50,7 +57,8 @@ services:
       context: ./cart-service
     container_name: cart-service
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/cart_db?createDatabaseIfNotExist=true&serverTimezone=UTC
     networks:
