@@ -1,21 +1,17 @@
 pipeline {
-    agent any
+    agent {
+        label 'agent-1'
+    }
 
     environment {
         AWS_REGION = 'us-east-1'
-        ECR_REGISTRY = '123456789.dkr.ecr.us-east-1.amazonaws.com'
+        ECR_REGISTRY = '369343500508.dkr.ecr.us-east-1.amazonaws.com'
         IMAGE_NAME = 'cart-service'
         IMAGE_TAG = "${env.GIT_COMMIT}"
         // Requires credentials with these IDs in Jenkins
         AWS_CRED_ID = 'aws-credentials' 
         SONAR_TOKEN = credentials('sonar-token')
         GITOPS_TOKEN = credentials('gitops-token')
-    }
-
-    tools {
-        // Must match the name configured in Jenkins "Global Tool Configuration"
-        maven 'maven' 
-        jdk 'jdk17' 
     }
 
     stages {
