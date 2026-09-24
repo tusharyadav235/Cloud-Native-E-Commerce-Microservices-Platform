@@ -8,7 +8,7 @@ pipeline {
 
     environment {
         AWS_REGION   = 'us-east-1'
-        ECR_REGISTRY = '123456789.dkr.ecr.us-east-1.amazonaws.com'
+        ECR_REGISTRY =  '369343500508.dkr.ecr.us-east-1.amazonaws.com'
         IMAGE_NAME   = 'product-service'
     }
 
@@ -17,7 +17,7 @@ pipeline {
         stage('Code Checkout') {
             steps {
                 cloneRepo(
-                    'https://github.com/tusharyadav235/Microservice-project.git',
+                    'https://github.com/tusharyadav235/Cloud-Native-E-Commerce-Microservices-Platform.git',
                     'main'
                 )
             }

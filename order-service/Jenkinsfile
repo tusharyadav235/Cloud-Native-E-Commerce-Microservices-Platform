@@ -17,7 +17,7 @@ pipeline {
         stage('Code Checkout') {
             steps {
                 cloneRepo(
-                    'https://github.com/tusharyadav235/Microservice-project.git',
+                    'https://github.com/tusharyadav235/Cloud-Native-E-Commerce-Microservices-Platform.git',
                     'main'
                 )
             }
