@@ -23,12 +23,7 @@ pipeline {
             }
         }
 
-        stage('Verify Tools') {
-            steps {
-                verifyTools()
-            }
-        }
-
+        
         stage('Build') {
             steps {
                 mavenBuild('order-service')
