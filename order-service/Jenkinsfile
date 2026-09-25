@@ -30,17 +30,17 @@ pipeline {
             }
         }
 
-        // stage('Unit Test') {
-        //     steps {
-        //         mavenTest('order-service')
-        //     }
-        //
-        //     post {
-        //         always {
-        //             junit 'order-service/target/surefire-reports/*.xml'
-        //         }
-        //     }
-        // }
+        stage('Unit Test') {
+            steps {
+                mavenTest('order-service')
+            }
+        
+            post {
+                always {
+                    junit 'order-service/target/surefire-reports/*.xml'
+                }
+            }
+        }
 
         stage('Package') {
             steps {
