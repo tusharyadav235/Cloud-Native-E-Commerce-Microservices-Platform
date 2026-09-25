@@ -124,7 +124,7 @@ pipeline {
             steps {
                 promoteToDev(
                     'order-service',
-                    'tusharyadav235/gitops',
+                    'tusharyadav235/cloud-native-ecommerce-gitops',
                     'main',
                     "${IMAGE_NAME}",
                     "${IMAGE_TAG}",
@@ -143,7 +143,7 @@ pipeline {
             steps {
                 promoteToProduction(
                     'order-service',
-                    'tusharyadav235/gitops',
+                    'tusharyadav235/cloud-native-ecommerce-gitops',
                     "${IMAGE_NAME}",
                     "${IMAGE_TAG}",
                     "${ECR_REGISTRY}"
