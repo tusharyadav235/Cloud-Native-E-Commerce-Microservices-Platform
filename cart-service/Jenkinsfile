@@ -1,97 +1,174 @@
+@Library('jenkins-shared-library') _
+
 pipeline {
+
     agent {
         label 'agent-1'
     }
 
     environment {
-        AWS_REGION = 'us-east-1'
+        AWS_REGION   = 'us-east-1'
         ECR_REGISTRY = '369343500508.dkr.ecr.us-east-1.amazonaws.com'
-        IMAGE_NAME = 'cart-service'
-        IMAGE_TAG = "${env.GIT_COMMIT}"
-        // Requires credentials with these IDs in Jenkins
-        AWS_CRED_ID = 'aws-credentials' 
-        SONAR_TOKEN = credentials('sonar-token')
-        GITOPS_TOKEN = credentials('gitops-token')
+        IMAGE_NAME   = 'cart-service'
     }
 
     stages {
-        stage('Build & Test') {
+
+        stage('Code Checkout') {
             steps {
-                dir('cart-service') {
-                    sh 'mvn clean package -DskipTests'
-                    // sh 'mvn test' // Commented out until TestContainers or H2 is configured
-                }
+                cloneRepo(
+                    'https://github.com/tusharyadav235/Cloud-Native-E-Commerce-Microservices-Platform.git',
+                    'main'
+                )
             }
-            // post {
-            //     always {
-            //         junit 'cart-service/target/surefire-reports/*.xml'
-            //     }
-            // }
         }
         
-        stage('Security Analysis') {
+        stage('Build') {
             steps {
-                dir('cart-service') {
-                    withSonarQubeEnv('sonar-server-name') { // Match this to your Jenkins SonarQube configuration name
-                        sh 'mvn org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.token=$SONAR_TOKEN'
-                    }
-                    sh 'mvn org.owasp:dependency-check-maven:check'
+                mavenBuild('cart-service')
+            }
+        }
+
+        stage('Unit Test') {
+            steps {
+                mavenTest('cart-service')
+            }
+        
+            post {
+                always {
+                    junit 'cart-service/target/surefire-reports/*.xml'
                 }
             }
         }
 
-        stage('Docker Build, Scan, and Push') {
+        stage('Package') {
             steps {
-                dir('cart-service') {
-                    script {
-                        // Using Docker Pipeline Plugin
-                        docker.withRegistry("https://${ECR_REGISTRY}", "ecr:${AWS_REGION}:${AWS_CRED_ID}") {
-                            def customImage = docker.build("${IMAGE_NAME}:${IMAGE_TAG}", "-f Dockerfile .")
-                            
-                            // Trivy Scan
-                            sh "trivy image --severity HIGH,CRITICAL --exit-code 1 ${IMAGE_NAME}:${IMAGE_TAG}"
-                            
-                            customImage.push()
-                        }
-                    }
-                }
+                mavenPackage('cart-service')
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                sonarAnalysis('cart-service')
+            }
+        }
+
+        stage('Quality Gate') {
+            steps {
+                qualityGate()
+            }
+        }
+
+        stage('Dependency Check') {
+            steps {
+                dependencyCheck('cart-service')
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                dockerBuild(
+                    'cart-service',
+                    "${IMAGE_NAME}",
+                    "${IMAGE_TAG}"
+                )
+            }
+        }
+
+        stage('Image Scan') {
+            steps {
+                trivyScan(
+                    "${IMAGE_NAME}",
+                    "${IMAGE_TAG}"
+                )
+            }
+        }
+
+        stage('AWS Authentication') {
+            steps {
+                awsAuthentication()
+            }
+        }
+
+        stage('Authenticate Docker to ECR') {
+            steps {
+                ecrLogin(
+                    "${AWS_REGION}",
+                    "${ECR_REGISTRY}"
+                )
+            }
+        }
+
+        stage('Tag Image') {
+            steps {
+                tagEcrImage(
+                    "${IMAGE_NAME}",
+                    "${IMAGE_TAG}",
+                    "${ECR_REGISTRY}"
+                )
+            }
+        }
+
+        stage('Push Image to ECR') {
+            steps {
+                pushEcrImage(
+                    "${ECR_REGISTRY}",
+                    "${IMAGE_NAME}",
+                    "${IMAGE_TAG}"
+                )
             }
         }
 
         stage('Promote to Dev') {
             steps {
-                sh '''
-                    git config user.name "jenkins-agent"
-                    git config user.email "jenkins-agent@jenkins.local"
-                '''
-                dir('k8s/overlays/dev') {
-                    sh '''
-                        kustomize edit set image cart-service=${ECR_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
-                        kustomize build . > /tmp/dev-manifest.yaml
-                    '''
-                }
-                sh '''
-                    git add k8s/overlays/dev/kustomization.yaml
-                    git commit -m "Promote cart-service ${IMAGE_TAG} to dev" || echo "No changes to commit"
-                    git push origin HEAD:main
-                '''
+                promoteToDev(
+                    'cart-service',
+                    'tusharyadav235/cloud-native-ecommerce-gitops',
+                    'main',
+                    "${IMAGE_NAME}",
+                    "${IMAGE_TAG}",
+                    "${ECR_REGISTRY}"
+                )
+            }
+        }
+
+        stage('Production Approval') {
+            steps {
+                productionApproval('cart-service')
             }
         }
 
         stage('Promote to Production') {
             steps {
-                dir('k8s/overlays/prod') {
-                    sh '''
-                        kustomize edit set image cart-service=${ECR_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
-                        kustomize build . > /tmp/production-manifest.yaml
-                    '''
-                }
-                sh '''
-                    git add k8s/overlays/prod/kustomization.yaml
-                    git commit -m "Promote cart-service ${IMAGE_TAG} to production" || echo "No changes to commit"
-                    git push origin HEAD:main
-                '''
+                promoteToProduction(
+                    'cart-service',
+                    'tusharyadav235/cloud-native-ecommerce-gitops',
+                    "${IMAGE_NAME}",
+                    "${IMAGE_TAG}",
+                    "${ECR_REGISTRY}"
+                )
             }
+        }
+    }
+
+    post {
+        success {
+            echo """
+            CI/CD pipeline completed successfully.
+
+            Application : ${IMAGE_NAME}
+            Image Tag   : ${IMAGE_TAG}
+            """
+        }
+        failure {
+            echo """
+            Pipeline failed.
+            Check the failed stage and Jenkins console logs.
+            """
+        }
+        always {
+            echo "Cleaning Jenkins workspace"
+            cleanWs()
         }
     }
 }
